@@ -1,9 +1,5 @@
+import common._
 import scala.util.Random
-import scala.collection._
-import scala.collection.parallel.CollectionConverters._
-import scala.concurrent._
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 package object Matrices {
   val random = new Random ()
@@ -87,11 +83,10 @@ package object Matrices {
   }
   // Ejercicio 1.2.4
   def multMatrizRecPar(m1: Matriz, m2: Matriz): Matriz = {
+    val threshold = 64 // Umbral para determinar cuándo no se paraleliza
     val n = m1.length
-    val threshold = 128 // Umbral para no paralelizar
-
     if (n <= threshold) {
-      multMatrizRec(m1, m2) // Utilizar la implementación secuencial para matrices pequeñas
+      multMatrizRec(m1, m2)
     } else {
       val l = n / 2
       val a11 = subMatriz(m1, 0, 0, l)
@@ -103,15 +98,16 @@ package object Matrices {
       val b21 = subMatriz(m2, l, 0, l)
       val b22 = subMatriz(m2, l, l, l)
 
-      val c11 = sumMatriz(multMatrizRec(a11, b11), multMatrizRec(a12, b21)).par
-      val c12 = sumMatriz(multMatrizRec(a11, b12), multMatrizRec(a12, b22)).par
-      val c21 = sumMatriz(multMatrizRec(a21, b11), multMatrizRec(a22, b21)).par
-      val c22 = sumMatriz(multMatrizRec(a21, b12), multMatrizRec(a22, b22)).par
+      val c11 = task { multMatrizRecPar(a11, b11) }
+      val c12 = task { multMatrizRecPar(a12, b21) }
+      val c21 = task { multMatrizRecPar(a21, b11) }
+      val c22 = task { multMatrizRecPar(a22, b21) }
 
-      val result1 = (c11, c12).zipped.map(_ ++ _)
-      val result2 = (c21, c22).zipped.map(_ ++ _)
+      val result1 = parallel(c11.join(), c12.join())
+      val result2 = parallel(c21.join(), c22.join())
 
-      result1 ++ result2
+      val result = result1 ++ result2
+      result
     }
   }
 

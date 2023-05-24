@@ -8,5 +8,7 @@ lazy val root = project
 
     scalaVersion := scala3Version,
 
-    libraryDependencies += "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4"
+    libraryDependencies += "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4",
+    libraryDependencies += "com.storm-enroute" %% "scalameter-core" % "0.21", 
+    libraryDependencies += "com.storm-enroute" %% "scalameter" % "0.21" % "test"
   )
